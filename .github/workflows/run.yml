@@ -19,8 +19,11 @@ jobs:
         run: |
           sudo apt-get update && sudo apt-get install -y xvfb
           xvfb-run -a python crawl_open.py
-      - name: Upload screenshot artifact
+            - name: Upload artifacts
         uses: actions/upload-artifact@v4
         with:
           name: naverland-state
-          path: state.png
+          path: |
+            .artifacts/state.png
+            .artifacts/state.html
+
