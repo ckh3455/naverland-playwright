@@ -30,7 +30,7 @@ def save_artifacts(page):
 
 def main():
     with sync_playwright() as p:
-        # CI(깃허브 액션)에서는 xvfb로 둘러서 headed 실행
+        # (GitHub Actions에서는 xvfb로 감싸서 headed 실행됨)
         browser = p.chromium.launch(headless=False)
         ctx = browser.new_context(
             locale="ko-KR",
@@ -44,10 +44,9 @@ def main():
         # 1) 홈 진입
         page.goto("https://land.naver.com", wait_until="domcontentloaded")
 
-        # 2) 404 즉시 진단
+        # 2) 404 즉시 진단 + 간단 복구 시도
         if has_404(page):
             print("DIAG: FOUND_404_AT_HOME")
-            # 404 화면 내 복귀 링크 시도
             recovered = False
             for sel in ["text=부동산 홈 바로가기", "text=이전페이지", "a[href*='land.naver.com']"]:
                 try:
@@ -60,8 +59,9 @@ def main():
                 except Exception:
                     pass
             if not recovered:
-                # 레퍼러 달고 다시 홈
-                page.goto("https://land.naver.com", referer="https://www.naver.com", wait_until="domcontentloaded")
+                page.goto("https://land.naver.com",
+                          referer="https://www.naver.com",
+                          wait_until="domcontentloaded")
                 print("DIAG: RETRY_WITH_REFERER")
         else:
             print("DIAG: NO_404_AT_HOME")
@@ -73,7 +73,7 @@ def main():
         print("FINAL_URL:", page.url)
         if has_404(page):
             print("RESULT: STILL_404")
-            os._exit(0)  # 파이프라인은 계속 흘러가게 종료코드는 0으로
+            os._exit(0)  # 파이프라인은 성공 취급(아티팩트 확인 목적)
         else:
             print("RESULT: OK")
             os._exit(0)
