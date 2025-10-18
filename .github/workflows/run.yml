@@ -15,14 +15,13 @@ jobs:
         with:
           python-version: "3.11"
 
-      - name: Install deps
+      # 모든 작업을 '한 개의 run 블록'에서 처리 (run은 step마다 1개만!)
+      - name: Install & Run (Playwright + xvfb)
         run: |
-          pip install -r requirements.txt
+          python -m pip install -r requirements.txt
           python -m playwright install --with-deps
-
-      - name: Run crawl_open.py (headed via xvfb)
-        run: |
-          sudo apt-get update && sudo apt-get install -y xvfb
+          sudo apt-get update
+          sudo apt-get install -y xvfb
           xvfb-run -a python crawl_open.py
 
       - name: List artifacts
