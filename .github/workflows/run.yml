@@ -3,7 +3,7 @@ name: naverland-open
 on:
   workflow_dispatch:
   schedule:
-    - cron: "0 0 * * *"  # UTC 자정 = KST 오전 9시
+    - cron: "0 0 * * *"  # UTC 자정 = KST 09:00
 
 jobs:
   run:
@@ -17,9 +17,21 @@ jobs:
         with:
           python-version: "3.11"
 
-      - name: Install Playwright
+      - name: Install Python deps
         run: |
           pip install -r requirements.txt
+
+      # (선택) Playwright 브라우저 캐시 - 속도 개선
+      - name: Cache Playwright browsers
+        id: pw-cache
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/ms-playwright
+          key: ${{ runner.os }}-pw-${{ hashFiles('requirements.txt') }}
+
+      - name: Install Playwright (browsers & deps if cache missed)
+        if: steps.pw-cache.outputs.cache-hit != 'true'
+        run: |
           python -m playwright install --with-deps
 
       - name: Run crawler (headed via xvfb)
@@ -27,7 +39,7 @@ jobs:
           sudo apt-get update && sudo apt-get install -y xvfb
           xvfb-run -a python crawl_open.py
 
-            - name: List generated files
+      - name: List generated files
         run: |
           ls -al .artifacts || true
 
@@ -35,7 +47,5 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: naverland-state
-          # 타임스탬프 파일 전체 업로드
           path: .artifacts/*
           if-no-files-found: warn
-
